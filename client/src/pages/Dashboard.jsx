@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
+import { API_BASE_URL } from '../api/config';
 import { Sparkles, Flame, Calendar, TrendingUp, Dumbbell, Smile, Moon } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import './Dashboard.css';
@@ -35,7 +36,7 @@ const Dashboard = () => {
       if (!userId) return;
       try {
         const today = new Date().toISOString().split('T')[0];
-        const response = await fetch(`/api/meals/${userId}?date=${today}`);
+        const response = await fetch(`${API_BASE_URL}/api/meals/${userId}?date=${today}`);
         const meals = await response.json();
         useStore.getState().setTodaysMeals(meals);
       } catch (error) {

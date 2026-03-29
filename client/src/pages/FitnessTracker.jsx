@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import useStore from '../store/useStore';
+import { API_BASE_URL } from '../api/config';
 import { Dumbbell, Play, Check, Timer, Award, Flame, Lightbulb, Moon, Video } from 'lucide-react';
 import './FitnessTracker.css';
 
@@ -43,7 +44,7 @@ const FitnessTracker = () => {
   const fetchWorkoutHistory = async () => {
     if (!userId) return;
     try {
-      const response = await fetch(`/api/workouts/${userId}`);
+      const response = await fetch(`${API_BASE_URL}/api/workouts/${userId}`);
       const workouts = await response.json();
       setCompletedWorkouts(workouts);
       calculateStreak(workouts);
@@ -107,7 +108,7 @@ const FitnessTracker = () => {
 
   const completeWorkout = async () => {
     try {
-      await fetch('/api/log/workout', {
+      await fetch(`${API_BASE_URL}/api/log/workout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

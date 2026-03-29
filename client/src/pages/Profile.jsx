@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
+import { API_BASE_URL } from '../api/config';
 import { User, Scale, TrendingDown, Calendar, Edit, LogOut } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import './Profile.css';
@@ -19,7 +20,7 @@ const Profile = () => {
   const fetchWeightLogs = async () => {
     if (!userId) return;
     try {
-      const response = await fetch(`/api/weight/${userId}`);
+      const response = await fetch(`${API_BASE_URL}/api/weight/${userId}`);
       const logs = await response.json();
       setWeightLogs(logs);
     } catch (error) {
@@ -31,7 +32,7 @@ const Profile = () => {
     if (!newWeight || isNaN(parseFloat(newWeight))) return;
 
     try {
-      await fetch('/api/log/weight', {
+      await fetch(`${API_BASE_URL}/api/log/weight`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

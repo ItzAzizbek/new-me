@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import useStore from '../store/useStore';
+import { API_BASE_URL } from '../api/config';
 import { Plus, Camera, X, Check, Trash2, TrendingUp } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line, ComposedChart } from 'recharts';
 import './DietTracker.css';
@@ -22,7 +23,7 @@ const DietTracker = () => {
     if (!userId) return;
     try {
       const today = new Date().toISOString().split('T')[0];
-      const response = await fetch(`/api/meals/${userId}?date=${today}`);
+      const response = await fetch(`${API_BASE_URL}/api/meals/${userId}?date=${today}`);
       const meals = await response.json();
       setTodaysMeals(meals);
     } catch (error) {
@@ -33,7 +34,7 @@ const DietTracker = () => {
   const fetchWeeklyData = async () => {
     if (!userId) return;
     try {
-      const response = await fetch(`/api/meals/${userId}`);
+      const response = await fetch(`${API_BASE_URL}/api/meals/${userId}`);
       const allMeals = await response.json();
       
       const last7Days = [];
@@ -74,7 +75,7 @@ const DietTracker = () => {
     setShowCamera(false);
 
     try {
-      const response = await fetch('/api/analyze-meal', {
+      const response = await fetch(`${API_BASE_URL}/api/analyze-meal`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -99,7 +100,7 @@ const DietTracker = () => {
     if (!analysis) return;
 
     try {
-      const response = await fetch('/api/log/meal', {
+      const response = await fetch(`${API_BASE_URL}/api/log/meal`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -128,7 +129,7 @@ const DietTracker = () => {
 
   const deleteMeal = async (mealId) => {
     try {
-      await fetch(`/api/meals/${mealId}`, { method: 'DELETE' });
+      await fetch(`${API_BASE_URL}/api/meals/${mealId}`, { method: 'DELETE' });
       removeMeal(mealId);
       fetchWeeklyData();
     } catch (error) {

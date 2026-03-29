@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
+import { API_BASE_URL } from '../api/config';
 import { Sparkles, Dumbbell, Home } from 'lucide-react';
 import './Onboarding.css';
 
@@ -59,7 +60,7 @@ const Onboarding = () => {
         weightInKg = weightInKg * 0.453592;
       }
 
-      const response = await fetch('/api/onboarding', {
+      const response = await fetch(`${API_BASE_URL}/api/onboarding`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
