@@ -68,7 +68,10 @@ const useStore = create(
         plan: state.plan,
         daysUntilBirthday: state.daysUntilBirthday,
         bmi: state.bmi,
-        tdee: state.tdee
+        tdee: state.tdee,
+        todaysMeals: state.todaysMeals,
+        todaysCalories: state.todaysCalories,
+        workoutStreak: state.workoutStreak
       })
     }
   )

@@ -9,7 +9,10 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/onboarding" element={<Onboarding />} />
+        <Route 
+          path="/onboarding" 
+          element={userId ? <Navigate to="/app" replace /> : <Onboarding />} 
+        />
         <Route 
           path="/app/*" 
           element={userId ? <MainApp /> : <Navigate to="/onboarding" replace />} 
