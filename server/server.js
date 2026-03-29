@@ -366,6 +366,90 @@ app.get('/api/plan/:userId', async (req, res) => {
   }
 });
 
+app.post('/api/update-plan', async (req, res) => {
+  try {
+    const { userId, newTargetWeight, newDailyCalorieTarget } = req.body;
+    
+    const user = db.users.get(userId);
+    const currentPlan = db.plans.get(userId);
+    
+    if (!user || !currentPlan) {
+      return res.status(404).json({ error: 'User or plan not found' });
+    }
+
+    const bmi = calculateBMI(user.weight, user.height);
+    const tdee = calculateTDEE(user.weight, user.height, user.age, user.gender);
+    
+    const systemInstruction = 'You are a fitness and wellness AI coach. Always respond with valid JSON only. No markdown, no explanation, no code fences.';
+    
+    const prompt = `${systemInstruction}
+    
+The user wants to update their fitness goals.
+Current Profile:
+Name: ${user.name}
+Age: ${user.age}
+Gender: ${user.gender}
+Height: ${user.height} cm
+Current Weight: ${user.weight} kg
+BMI: ${bmi.toFixed(1)}
+TDEE: ${tdee.toFixed(0)} calories/day
+
+New Requested Goals:
+Target Weight: ${newTargetWeight} kg
+Daily Calorie Target: ${newDailyCalorieTarget} calories
+
+Your Task:
+1. Check if these goals are realistic.
+   - Losing more than 1kg per week is generally unrealistic.
+   - Daily calories below 1200 for women or 1500 for men are generally unsafe.
+2. If the goal is unrealistic, provide a helpful reason and a suggested realistic alternative.
+3. If the goal is realistic, generate an updated plan (goalSummary, workoutPlan, milestones).
+
+Return ONLY valid JSON with this structure:
+{
+  "realistic": boolean,
+  "reason": "explanation if unrealistic, or empty string",
+  "suggestedWeight": number (only if unrealistic),
+  "suggestedCalories": number (only if unrealistic),
+  "updatedPlan": {
+    "goalSummary": "2-sentence updated summary",
+    "targetWeight": number,
+    "dailyCalorieTarget": number,
+    "fitnessLevel": "${currentPlan.fitnessLevel}",
+    "workoutPlan": [ ... same structure as onboarding ... ],
+    "milestones": [ ... same structure as onboarding ... ]
+  }
+}`;
+
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash'
+    });
+    
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+    const cleanedText = stripMarkdownFences(responseText);
+    const evaluation = JSON.parse(cleanedText);
+    
+    if (evaluation.realistic) {
+      const updatedPlan = {
+        userId,
+        ...evaluation.updatedPlan,
+        weeklyCalorieTarget: evaluation.updatedPlan.dailyCalorieTarget * 7,
+        created_at: new Date().toISOString()
+      };
+      
+      db.plans.set(userId, updatedPlan);
+      res.json({ success: true, plan: updatedPlan });
+    } else {
+      res.json({ success: false, reason: evaluation.reason, suggestedWeight: evaluation.suggestedWeight, suggestedCalories: evaluation.suggestedCalories });
+    }
+    
+  } catch (error) {
+    console.error('Update plan error:', error);
+    res.status(500).json({ error: 'Failed to update plan', details: error.message });
+  }
+});
+
 app.get('/api/progress/:userId', async (req, res) => {
   try {
     const { userId } = req.params;

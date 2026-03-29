@@ -48,6 +48,8 @@ const useStore = create(
       
       updateWorkoutStreak: (streak) => set({ workoutStreak: streak }),
       
+      updatePlan: (newPlan) => set({ plan: newPlan }),
+      
       clearUserData: () => set({
         userId: null,
         user: null,

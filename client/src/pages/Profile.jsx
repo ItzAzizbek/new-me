@@ -8,10 +8,16 @@ import './Profile.css';
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { userId, user, plan, daysUntilBirthday, bmi, clearUserData } = useStore();
+  const { userId, user, plan, daysUntilBirthday, bmi, clearUserData, updatePlan } = useStore();
   const [weightLogs, setWeightLogs] = useState([]);
   const [showWeightInput, setShowWeightInput] = useState(false);
   const [newWeight, setNewWeight] = useState('');
+  
+  // Goal editing state
+  const [editingGoal, setEditingGoal] = useState(null); // 'weight' or 'calories'
+  const [goalValue, setGoalValue] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [aiFeedback, setAiFeedback] = useState(null);
 
   useEffect(() => {
     fetchWeightLogs();
@@ -47,6 +53,47 @@ const Profile = () => {
     } catch (error) {
       console.error('Failed to log weight:', error);
       alert('Failed to save weight. Please try again.');
+    }
+  };
+
+  const handleUpdateGoal = async () => {
+    if (!goalValue || isNaN(parseFloat(goalValue))) return;
+    
+    setIsUpdating(true);
+    setAiFeedback(null);
+
+    const newTargetWeight = editingGoal === 'weight' ? parseFloat(goalValue) : plan.targetWeight;
+    const newDailyCalorieTarget = editingGoal === 'calories' ? parseFloat(goalValue) : plan.dailyCalorieTarget;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/update-plan`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          newTargetWeight,
+          newDailyCalorieTarget
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        updatePlan(data.plan);
+        setEditingGoal(null);
+        setGoalValue('');
+      } else {
+        setAiFeedback({
+          reason: data.reason,
+          suggestedWeight: data.suggestedWeight,
+          suggestedCalories: data.suggestedCalories
+        });
+      }
+    } catch (error) {
+      console.error('Failed to update goal:', error);
+      alert('Something went wrong. Please try again.');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -137,7 +184,7 @@ const Profile = () => {
             </div>
             <button className="log-weight-btn" onClick={() => setShowWeightInput(!showWeightInput)}>
               <Edit size={16} />
-              Log Weight
+              Log Progress
             </button>
           </div>
 
@@ -145,7 +192,7 @@ const Profile = () => {
             <div className="weight-input-section slide-up">
               <input
                 type="number"
-                placeholder="Enter weight (kg)"
+                placeholder="Enter current weight (kg)"
                 value={newWeight}
                 onChange={(e) => setNewWeight(e.target.value)}
                 className="weight-input"
@@ -167,8 +214,12 @@ const Profile = () => {
               <div className="weight-label">Current</div>
               <div className="weight-value">{currentWeight?.toFixed(1)} kg</div>
             </div>
-            <div className="weight-stat">
-              <div className="weight-label">Target</div>
+            <div className="weight-stat editable" onClick={() => {
+              setEditingGoal('weight');
+              setGoalValue(plan?.targetWeight);
+              setAiFeedback(null);
+            }}>
+              <div className="weight-label">Target <Edit size={12} /></div>
               <div className="weight-value">{plan?.targetWeight?.toFixed(1)} kg</div>
             </div>
             <div className="weight-stat">
@@ -178,6 +229,37 @@ const Profile = () => {
               </div>
             </div>
           </div>
+
+          {editingGoal === 'weight' && (
+            <div className="goal-edit-overlay slide-up">
+              <div className="goal-edit-card">
+                <h4>Update Weight Goal</h4>
+                <div className="input-with-label">
+                  <input 
+                    type="number" 
+                    value={goalValue} 
+                    onChange={(e) => setGoalValue(e.target.value)} 
+                    step="0.1"
+                  />
+                  <span>kg</span>
+                </div>
+                {aiFeedback && (
+                  <div className="ai-feedback error">
+                    <p>{aiFeedback.reason}</p>
+                    <button onClick={() => setGoalValue(aiFeedback.suggestedWeight)}>
+                      Use Suggested: {aiFeedback.suggestedWeight}kg
+                    </button>
+                  </div>
+                )}
+                <div className="goal-actions">
+                  <button className="cancel-btn" onClick={() => setEditingGoal(null)} disabled={isUpdating}>Cancel</button>
+                  <button className="save-btn" onClick={handleUpdateGoal} disabled={isUpdating}>
+                    {isUpdating ? 'AI is recalculating...' : 'Update Plan'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {chartData.length > 0 && (
             <div className="weight-chart">
@@ -230,13 +312,47 @@ const Profile = () => {
               <div className="metric-value">{bmi?.toFixed(1)}</div>
               <div className="metric-category">{getBMICategory(bmi)}</div>
             </div>
-            <div className="metric-card">
-              <div className="metric-label">Daily Calories</div>
+            <div className="metric-card editable" onClick={() => {
+              setEditingGoal('calories');
+              setGoalValue(plan?.dailyCalorieTarget);
+              setAiFeedback(null);
+            }}>
+              <div className="metric-label">Daily Calories <Edit size={12} /></div>
               <div className="metric-value">{plan?.dailyCalorieTarget?.toFixed(0)}</div>
-              <div className="metric-category">Target</div>
+              <div className="metric-category">Click to edit</div>
             </div>
           </div>
         </div>
+
+        {editingGoal === 'calories' && (
+          <div className="goal-edit-overlay slide-up">
+            <div className="goal-edit-card">
+              <h4>Update Calorie Goal</h4>
+              <div className="input-with-label">
+                <input 
+                  type="number" 
+                  value={goalValue} 
+                  onChange={(e) => setGoalValue(e.target.value)} 
+                />
+                <span>kcal</span>
+              </div>
+              {aiFeedback && (
+                <div className="ai-feedback error">
+                  <p>{aiFeedback.reason}</p>
+                  <button onClick={() => setGoalValue(aiFeedback.suggestedCalories)}>
+                    Use Suggested: {aiFeedback.suggestedCalories}kcal
+                  </button>
+                </div>
+              )}
+              <div className="goal-actions">
+                <button className="cancel-btn" onClick={() => setEditingGoal(null)} disabled={isUpdating}>Cancel</button>
+                <button className="save-btn" onClick={handleUpdateGoal} disabled={isUpdating}>
+                  {isUpdating ? 'AI is recalculating...' : 'Update Plan'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="goal-card card-appear">
           <div className="goal-header">
