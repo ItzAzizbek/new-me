@@ -409,8 +409,8 @@ Return ONLY valid JSON with this structure:
 {
   "realistic": boolean,
   "reason": "explanation if unrealistic, or empty string",
-  "suggestedWeight": number (only if unrealistic),
-  "suggestedCalories": number (only if unrealistic),
+  "suggestedWeight": number (ALWAYS include if realistic is false),
+  "suggestedCalories": number (ALWAYS include if realistic is false),
   "updatedPlan": {
     "goalSummary": "2-sentence updated summary",
     "targetWeight": number,
@@ -419,7 +419,8 @@ Return ONLY valid JSON with this structure:
     "workoutPlan": [ ... same structure as onboarding ... ],
     "milestones": [ ... same structure as onboarding ... ]
   }
-}`;
+}
+If goals are unrealistic, don't generate the updatedPlan, but DO provide reason, suggestedWeight, and suggestedCalories.`;
 
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash'

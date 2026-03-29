@@ -243,12 +243,17 @@ const Profile = () => {
                   />
                   <span>kg</span>
                 </div>
-                {aiFeedback && (
+                {aiFeedback && aiFeedback.suggestedWeight && (
                   <div className="ai-feedback error">
                     <p>{aiFeedback.reason}</p>
                     <button onClick={() => setGoalValue(aiFeedback.suggestedWeight)}>
                       Use Suggested: {aiFeedback.suggestedWeight}kg
                     </button>
+                  </div>
+                )}
+                {aiFeedback && !aiFeedback.suggestedWeight && (
+                  <div className="ai-feedback error">
+                    <p>{aiFeedback.reason}</p>
                   </div>
                 )}
                 <div className="goal-actions">
@@ -336,12 +341,17 @@ const Profile = () => {
                 />
                 <span>kcal</span>
               </div>
-              {aiFeedback && (
+              {aiFeedback && aiFeedback.suggestedCalories && (
                 <div className="ai-feedback error">
                   <p>{aiFeedback.reason}</p>
                   <button onClick={() => setGoalValue(aiFeedback.suggestedCalories)}>
                     Use Suggested: {aiFeedback.suggestedCalories}kcal
                   </button>
+                </div>
+              )}
+              {aiFeedback && !aiFeedback.suggestedCalories && (
+                <div className="ai-feedback error">
+                  <p>{aiFeedback.reason}</p>
                 </div>
               )}
               <div className="goal-actions">
